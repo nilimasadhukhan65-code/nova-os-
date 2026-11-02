@@ -1,0 +1,53 @@
+
+name: Build NOVA OS APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools'
+
+      - name: Install Android SDK
+        run: |
+          sdkmanager --install "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Extract NOVA OS ZIP
+        run: |
+          mkdir build-src
+          unzip -q NOVA_OS_Android_Project_v1_FIXED.zip -d build-src
+
+      - name: Build APK
+        run: |
+          cd build-src/NOVA_OS_Android_Project
+          gradle --no-daemon assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: NOVA-OS-APK
+          path: build-src/NOVA_OS_Android_Project/app/build/outputs/apk/debug/app-debug.apk
